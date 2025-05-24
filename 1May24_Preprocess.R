@@ -49,29 +49,11 @@ filtered_tpm <- combined_tpm[keep_genes, ]
 cat("# of genes after filtering:", nrow(filtered_tpm), "\n") #50379
 
 # 4. TPM DATA TRANSFORMATION=====
-# Method 1: Log2(TPM + 1)
 transform_log2_tpm <- function(tpm_matrix) {
   log2_tpm <- log2(tpm_matrix + 1)
   return(log2_tpm)
 }
-# Method 2: Quantile normalization (cross-sample normalization)
-quantile_normalize <- function(tpm_matrix) {
-  # Simple quantile normalization
-  ranks <- apply(tpm_matrix, 2, rank, ties.method = "average")
-  sorted_means <- sort(rowMeans(tpm_matrix, na.rm = TRUE))
-  qnorm_matrix <- apply(ranks, 2, function(x) sorted_means[x])
-  rownames(qnorm_matrix) <- rownames(tpm_matrix)
-  colnames(qnorm_matrix) <- colnames(tpm_matrix)
-  return(qnorm_matrix)
-}
-# Method 3: Z-score normalization per gene
-zscore_normalize <- function(tpm_matrix) {
-  zscore_matrix <- t(scale(t(tpm_matrix)))
-  return(zscore_matrix)
-}
 norm_log2_tpm <- transform_log2_tpm(filtered_tpm) # Log2(TPM + 1)
-norm_quantile_tpm <- quantile_normalize(norm_log2_tpm)
-norm_zscore_tpm <- zscore_normalize(norm_log2_tpm)
 
 # 5. FEATURE SELECTION=======
 # Select most variable genes: base on Var
@@ -195,7 +177,6 @@ save(
   combined_tpm,
   filtered_tpm,
   norm_log2_tpm,
-  norm_quantile_tpm,
   ml_data_var,
   ml_dataset_var,
   sample_info,
@@ -212,3 +193,72 @@ write.csv(
   "selected_variable_genes.csv",
   row.names = FALSE
 )
+
+# ==============================================================================
+# Validation dataset
+# ==============================================================================
+library(readxl)
+validation_tpm_path <- "./data/validation_exon_tpm"
+validation_tpm <- read.table(validation_tpm_path, header = TRUE, row.names = 1, sep = "\t", check.names = FALSE)
+# Load metadata files
+bc_meta_path <- "./data/validation_bc_meta.xlsx"
+normal_meta_path <- "./data/validation_normal_meta.xlsx"
+bc_meta <- read_excel(bc_meta_path)
+normal_meta <- read_excel(normal_meta_path)
+bc_sample_ids <- bc_meta$`Mapping ID`
+normal_sample_ids <- normal_meta$`Mapping ID`
+# Find matches
+tpm_sample_ids <- colnames(validation_tpm)
+bc_matches <- intersect(tpm_sample_ids, bc_sample_ids)
+normal_matches <- intersect(tpm_sample_ids, normal_sample_ids)
+setdiff(tpm_sample_ids, c(bc_matches, normal_matches))
+validation_sample_info <- data.frame(
+  sample_id = c(bc_matches, normal_matches),
+  condition = c(rep("Cancer", length(bc_matches)), rep("Normal", length(normal_matches))),
+  dataset = "Validation",
+  stringsAsFactors = FALSE
+)
+table(validation_sample_info$condition)
+
+matched_samples <- c(bc_matches, normal_matches)
+validation_tpm_matched <- validation_tpm[, matched_samples]
+dim(validation_tpm_matched) #60675   161
+validation_genes <- rownames(validation_tpm_matched)
+common_genes_val <- intersect(training_genes, validation_genes)
+validation_tpm_aligned <- validation_tpm_matched[common_genes_val, ]
+# Preprocess validation data: same pipeline as training
+validation_log2_tpm <- transform_log2_tpm(validation_tpm_aligned)
+
+# Prepare datasets using different normalization methods
+validation_ml_dataset <- prepare_ml_dataset(
+  validation_log2_tpm, 
+  validation_sample_info, 
+  "Validation - Log2(TPM+1)"
+)
+
+validation_pca <- perform_pca_analysis(
+  validation_log2_tpm, 
+  "Validation - Log2(TPM+1)", 
+  validation_sample_info
+)
+# COMPARE WITH TRAINING DATA DISTRIBUTION
+
+if(exists("norm_log2_tpm")) {
+  training_subset <- norm_log2_tpm[common_genes_val, ]
+  training_means <- rowMeans(training_subset, na.rm = TRUE)
+  validation_means <- rowMeans(validation_log2_tpm, na.rm = TRUE)
+  # Correlation between mean expressions
+  mean_correlation <- cor(training_means, validation_means, use = "complete.obs")
+  # Plot
+  plot(training_means, validation_means, 
+       xlab = "Training Mean Expression", 
+       ylab = "Validation Mean Expression",
+       main = paste("Gene Expression Correlation\nr =", round(mean_correlation, 3)),
+       pch = 16, alpha = 0.5)
+  abline(0, 1, col = "red", lty = 2)
+}
+
+# Save CSV files for Validation dataset
+write.csv(validation_ml_dataset, "validation_ml_dataset_log2.csv", row.names = FALSE)
+
+write.csv(validation_sample_info, "validation_sample_info.csv", row.names = FALSE)

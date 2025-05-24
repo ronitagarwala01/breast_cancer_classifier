@@ -24,6 +24,14 @@ Hanchang Cai (May 24, 2025)
 >  
 > Selected features for ML: 5000 
 
+---
+
+Same pipeline for validation: `data/valid_dataset.csv`. **NO genes are missing** from training to validation dataset. Final Validation dataset dimensions: **161 Rows (83 cancer + 78 normal), 5002 Cols**.
+
+> Total genes in validation: 60675
+>
+> Common genes with training: 5000 
+
 ## 2. Preprocessing Summary
 
 <u>**Note**: I decided to use TPM instead of raw counts after some experiments.</u>
@@ -31,12 +39,14 @@ Hanchang Cai (May 24, 2025)
 #### What Was Done
 
 1. **Quality Control**
+   
    - Filtered low-expression genes (mean TPM < 1)
    - Kept 50,379/60,675 genes after filtering
 2. **Transformation**
-   - Applied Log2(TPM + 1) transformation, Quantile normalization, Z-score scaling per gene
+   
+   - Applied Log2(TPM + 1) transformation
    - Selected top 5,000 most variable genes (based on variance)
-3. **EDA** (see `4. EDA Results` below): PCA analysis, Correlation heatmaps
+3. **EDA** (see `4. EDA Results` below): PCA analysis, Correlation heatmaps for Training & Validation Data.
    
    **Optional**: comparison between recurrent vs non-recurrent samples
 
@@ -53,20 +63,36 @@ Hanchang Cai (May 24, 2025)
 
 ## 4. EDA Results
 
-#### 4.1 PCA: Clear separation between cancer/normal samples
+#### 4.1 Training Data
+
+##### PCA: Clear separation between cancer/normal samples
 
 > Variance explained by first 10 PCs:
 > 
 > 6.61 1.65 1.07 1.03 1.01 1.00 1.00 0.99 0.98 0.97
 
-![PCA Analysis](./plots/PCA.png)
+![Train PCA](./plots/PCA.png)
 
-#### 4.2 Correlation Heatmaps: Samples cluster by condition as expected
+##### Correlation Heatmaps: Samples cluster by condition as expected
 
-![Correlation Heatmap](./plots/heatmap.png)
+![Train Heatmap](./plots/heatmap.png)
+
+#### 4.2 Validation Data: seems challenging...
+
+> Variance explained by first 10 PCs:
+> 
+>  5.16 0.86 0.86 0.83 0.82 0.82 0.81 0.80 0.80 0.79
+
+![Valid PCA](./plots/valid_PCA.png)
+
+![Valid Heatmap](./plots/valid_heatmap.png)
+
+##### Correlation between Training and Valid.
+
+![Train & Valid Cor](./plots/training_valid_cor.png)
 
 #### 4.3 Recurrence vs non-recurrence samples: Poor separability
 
-![Recur_Cor](./plots/recur_heatmap.png)
+![Recur PCA](./plots/recur_PCA.png)
 
-![Recur_PCA](./plots/recur_PCA.png)
+![Recur Heatmap](./plots/recur_heatmap.png)

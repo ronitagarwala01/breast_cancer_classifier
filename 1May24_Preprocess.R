@@ -262,3 +262,20 @@ if(exists("norm_log2_tpm")) {
 write.csv(validation_ml_dataset, "validation_ml_dataset_log2.csv", row.names = FALSE)
 
 write.csv(validation_sample_info, "validation_sample_info.csv", row.names = FALSE)
+
+sample_cors <- cor(validation_log2_tpm, method = "pearson")
+
+# Create correlation heatmap
+pheatmap(
+  sample_cors,
+  annotation_col = data.frame(
+    Condition = validation_sample_info$condition,
+    row.names = validation_sample_info$sample_id
+  ),
+  annotation_colors = list(
+    Condition = c("Cancer" = "#E74C3C", "Normal" = "#3498DB")
+  ),
+  main = "Sample-to-Sample Correlation Heatmap",
+  show_rownames = FALSE,
+  show_colnames = FALSE
+)

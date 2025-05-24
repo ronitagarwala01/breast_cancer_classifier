@@ -1,8 +1,8 @@
 # TPM Gene Expression Data Preprocessing
 
-Hanchang Cai
+Feel free to overwrite this. 
 
-May 24, 2025
+Hanchang Cai (May 24, 2025)
 
 ## 1. Dataset Overview
 
@@ -18,8 +18,10 @@ May 24, 2025
 
 **Ready-to-use:** no further QC is needed, but you can still consider Recursive Feature Elimination etc. as further feature selection methods.
 
-> Common genes between datasets: 60675 
-> Genes after filtering: 50379 
+> Common genes between datasets: 60675
+>  
+> Genes after filtering: 50379
+>  
 > Selected features for ML: 5000 
 
 ## 2. Preprocessing Summary
@@ -35,6 +37,7 @@ May 24, 2025
    - Applied Log2(TPM + 1) transformation, Quantile normalization, Z-score scaling per gene
    - Selected top 5,000 most variable genes (based on variance)
 3. **EDA** (see `4. EDA Results` below): PCA analysis, Correlation heatmaps
+   
    **Optional**: comparison between recurrent vs non-recurrent samples
 
 ## 3. Next Step: Notes & Recommendations
@@ -45,6 +48,7 @@ May 24, 2025
       - Random Forest with class_weight='balanced'
       - Elastic Net with balanced class weights
 3. Cross-validation? Use stratified k-fold (k=5 or k=10)?
+   
    Further feature selection? Recursive Feature Elimination, etc.
 
 ## 4. EDA Results
@@ -52,6 +56,7 @@ May 24, 2025
 #### 4.1 PCA: Clear separation between cancer/normal samples
 
 > Variance explained by first 10 PCs:
+> 
 > 6.61 1.65 1.07 1.03 1.01 1.00 1.00 0.99 0.98 0.97
 
 ![PCA Analysis](./plots/PCA.png)

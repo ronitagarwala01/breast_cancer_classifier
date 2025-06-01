@@ -1,4 +1,4 @@
-# 1. TPM Gene Expression Data Preprocessing
+# TPM Gene Expression Data Preprocessing
 # Author: Hanchang (Hazel) Cai
 # Date: May 24, 2025
 library(tidyverse)
